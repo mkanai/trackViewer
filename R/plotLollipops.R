@@ -166,8 +166,8 @@ plotLollipops <- function(SNPs, feature.height, bottomHeight, baseline,
         if(type=="circle"){
           if(length(SNPs$shape)==length(SNPs)){
             ## shape could only be "circle", "square", "diamond", "triangle_point_up", "triangle_point_down"
-            if(!all(SNPs$shape %in% c("circle", "square", "diamond", "triangle_point_up", "triangle_point_down"))){
-              message('shape must be "circle", "square", "diamond", "triangle_point_up", or "triangle_point_down"')
+            if(!all(SNPs$shape %in% c("circle", "square", "diamond", "triangle_point_up", "triangle_point_down", "star"))){
+              message('shape must be "circle", "square", "diamond", "triangle_point_up", "triangle_point_down", or "star')
               SNPs$shape <- as.numeric(factor(SNPs$shape))
               SNPs$shape <- rep(c("circle", "square", "diamond", "triangle_point_up", "triangle_point_down"), 
                                 max(SNPs$shape))[SNPs$shape]
@@ -181,17 +181,21 @@ plotLollipops <- function(SNPs, feature.height, bottomHeight, baseline,
             color <- if(is.list(this.dat$color)) this.dat$color[[1]] else this.dat$color
             border <- 
                 if(is.list(this.dat$border)) this.dat$border[[1]] else this.dat$border
+            border.circle <-
+                if(is.list(this.dat$border.circle)) this.dat$border.circle[[1]] else this.dat$border.circle
             fill <- if(is.list(this.dat$fill)) this.dat$fill[[1]] else this.dat$fill
             alpha <- if(length(this.dat$alpha)>0) this.dat$alpha[[1]] else 1
             lwd <- if(is.list(this.dat$lwd)) this.dat$lwd[[1]] else this.dat$lwd
+            lwd.circle <- if(is.list(this.dat$lwd.circle)) this.dat$lwd.circle[[1]] else this.dat$lwd.circle
             id <- if(is.character(this.dat$label)) this.dat$label else NA
             id.col <- if(length(this.dat$label.col)>0) this.dat$label.col else "black"
             shape <- if(length(this.dat$shape)>0) this.dat$shape[[1]] else "circle"
             rot <- if(length(this.dat$label.rot)>0) this.dat$label.rot else 15
             this.cex <- if(length(this.dat$cex)>0) this.dat$cex[[1]][1] else 1
+            id.cex <- if(length(this.dat$label.cex)>0) this.dat$label.cex else this.cex * 0.75
             this.dashline.col <- 
               if(length(this.dat$dashline.col)>0) this.dat$dashline.col[[1]][1] else dashline.col
-            if(length(names(this.dat))<1) this.dashline.col <- NA
+            if(length(names(this.dat))<1 | names(this.dat) == '') this.dashline.col <- NA
             this.dat.mcols <- mcols(this.dat)
             this.dat.mcols <- 
                 this.dat.mcols[, 
@@ -224,7 +228,7 @@ plotLollipops <- function(SNPs, feature.height, bottomHeight, baseline,
                           y3=4*GAP*cex, y4=2.5*GAP*cex, 
                           radius=LINEW*cex/2,
                           col=color,
-                          border=border,
+                          border=border, border.circle=border.circle,
                           percent=this.dat.mcols,
                           edges=100,
                           type=type,
@@ -232,8 +236,8 @@ plotLollipops <- function(SNPs, feature.height, bottomHeight, baseline,
                           pin=pin,
                           scoreMax=scoreMax * LINEW * cex,
                           scoreType=scoreType,
-                          id=id, id.col=id.col,
-                          cex=this.cex, lwd=lwd, dashline.col=this.dashline.col,
+                          id=id, id.col=id.col, id.cex=id.cex,
+                          cex=this.cex, lwd=lwd, lwd.circle=lwd.circle, dashline.col=this.dashline.col,
                           side=side, rot=rot, alpha=alpha, shape=shape)
 
         }
@@ -242,7 +246,7 @@ plotLollipops <- function(SNPs, feature.height, bottomHeight, baseline,
                                  scoreMax=scoreMax,
                                  level="data")
         labels.rot <- 90
-        if(length(names(SNPs))>0){
+        if(length(names(SNPs))>0 & !all(names(SNPs) == '')){
             if(type=="pie.stack"){
                 ## unique lab.pos and SNPs
                 idx <- !duplicated(names(SNPs))
@@ -261,12 +265,15 @@ plotLollipops <- function(SNPs, feature.height, bottomHeight, baseline,
             ## change the parameter by use definations.
             for(label.parameter in c("x", "y", "just", "hjust", "vjust",
                                      "rot", "check.overlap", "default.units",
-                                     "gp")){
+                                     "gp", "cex")){
                 label.para <- paste0("label.parameter.", label.parameter)
                 if(label.para %in% colnames(mcols(SNPs))){
                     assign(paste0("labels.", label.parameter), 
                            mcols(SNPs)[, label.para])
                 }
+            }
+            if (!is.null(labels.cex)) {
+              labels.gp <- gpar(cex = labels.cex[1])
             }
             if(!"cex" %in% names(labels.gp)){
               labels.gp <- c(labels.gp, cex=cex)
@@ -300,22 +307,24 @@ plotLollipops <- function(SNPs, feature.height, bottomHeight, baseline,
               rased.height <- 4*GAP*cex
               guide.height <- 2.5*GAP*cex
               for(i in 1:length(SNPs)){
-                this.dashline.col <- 
-                  if(length(SNPs[i]$dashline.col)>0) 
-                    SNPs[i]$dashline.col[[1]][1] else 
-                      dashline.col
-                if(length(names(SNPs[i]))<1) this.dashline.col <- NA
-                grid.lines(x=c(start(SNPs[i]), labels.x[i]), 
-                           y=c(this.height+feature.height-cex*LINEW, 
-                               this.height+feature.height+rased.height),
-                           default.units = labels.default.units,
-                           gp=gpar(col=this.dashline.col, lty=3))
-                grid.lines(x=c(labels.x[i], labels.x[i]),
-                           y=c(this.height+rased.height+feature.height,
-                               this.height+rased.height+
-                                 guide.height+feature.height),
-                           default.units = labels.default.units,
-                           gp=gpar(col=this.dashline.col, lty=3))
+                if (labels.text[i] != '') {
+                  this.dashline.col <- 
+                    if(length(SNPs[i]$dashline.col)>0) 
+                      SNPs[i]$dashline.col[[1]][1] else 
+                        dashline.col
+                  if(length(names(SNPs[i]))<1) this.dashline.col <- NA
+                  grid.lines(x=c(start(SNPs[i]), labels.x[i]), 
+                             y=c(this.height+feature.height-cex*LINEW, 
+                                 this.height+feature.height+rased.height),
+                             default.units = labels.default.units,
+                             gp=gpar(col=this.dashline.col, lty=3))
+                  grid.lines(x=c(labels.x[i], labels.x[i]),
+                             y=c(this.height+rased.height+feature.height,
+                                 this.height+rased.height+
+                                   guide.height+feature.height),
+                             default.units = labels.default.units,
+                             gp=gpar(col=this.dashline.col, lty=3))
+                }
               }
               ## add this height
               this.height <- this.height + rased.height + guide.height

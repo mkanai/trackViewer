@@ -47,6 +47,7 @@ grid.lollipop <- function (x1=.5, y1=.5,
                            radius=.8,
                            col=NULL,
                            border=NULL,
+                           border.circle=NULL,
                            percent=NULL,
                            edges=100,
                            type=c("circle", "pie", "pin", "pie.stack", "flag"),
@@ -54,8 +55,8 @@ grid.lollipop <- function (x1=.5, y1=.5,
                            pin=NULL,
                            scoreMax,
                            scoreType,
-                           id=NA, id.col="black",
-                           cex=1, lwd=1,
+                           id=NA, id.col="black", id.cex=0.75,
+                           cex=1, lwd=1, lwd.circle=1,
                            dashline.col="gray80",
                            side=c("top", "bottom"),
                            rot=15,
@@ -115,7 +116,15 @@ grid.lollipop <- function (x1=.5, y1=.5,
     switch(type,
            circle={
                if(length(border)==0) border <- "black"
-               if(length(col)==0) col <- "white"
+               if (length(col)==0) {
+                 col <- "white"
+               } else {
+                  border = col
+               }
+               if(!is.null(border.circle)) {
+                 border = border.circle
+               }
+               lwd = lwd.circle
                if(scoreType){
                    for(i in 1:this.score){
                        y0 <- y2+y3+y4+2*radius*ratio.yx*(i-.5)*cex
@@ -174,7 +183,7 @@ grid.lollipop <- function (x1=.5, y1=.5,
                        if(side) y0 <- 1 - y0
                        grid.text(label=id, x=x2, 
                                  y=y0,
-                                 just="centre", gp=gpar(col=id.col, cex=.75*cex))
+                                 just="centre", gp=gpar(col=id.col, cex=id.cex))
                    }
                }
                },
