@@ -1,8 +1,8 @@
 ---
 title: "trackViewer Vignette"
 author: "Jianhong Ou, Lihua Julie Zhu"
-date: "`r doc_date()`"
-package: "`r pkg_ver('trackViewer')`"
+date: "`r BiocStyle::doc_date()`"
+package: "`r BiocStyle::pkg_ver('trackViewer')`"
 abstract: >
   Visualize mapped reads along with annotation as track layers for NGS dataset 
   such as ChIP-seq, RNA-seq, miRNA-seq, DNA-seq, SNPs and methylation data.
@@ -11,7 +11,12 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 output:
-  BiocStyle::html_document
+  html_document:
+    theme: simplex
+    toc: true
+    toc_float: true
+    toc_depth: 4
+    fig_caption: true
 ---
 
 ```{r, echo=FALSE, results="hide", warning=FALSE}
@@ -175,7 +180,10 @@ viewerStyle <- optSty$style
 setTrackViewerStyleParam(viewerStyle, "xaxis", FALSE)
 setTrackViewerStyleParam(viewerStyle, "margin", c(.01, .05, .01, .01))
 setTrackXscaleParam(trackList[[1]], "draw", TRUE)
-setTrackXscaleParam(trackList[[1]], "gp", list(cex=.5))
+setTrackXscaleParam(trackList[[1]], "gp", list(cex=0.8))
+viewTracks(trackList, gr=gr, viewerStyle=viewerStyle)
+setTrackXscaleParam(trackList[[1]], attr="position", 
+                    value=list(x=122929700, y=3, label=200))
 viewTracks(trackList, gr=gr, viewerStyle=viewerStyle)
 ```
 
@@ -827,13 +835,18 @@ To rescale, the x-axis could be reset as below.
 ```{r fig.width=6,fig.height=2.5}
 methy$cex <- 1
 lolliplot(methy, features, ranges=gr, rescale = TRUE)
+## by set percentage for features and non-features segments
+xaxis <- c(50968014, 50968514, 50968710, 50968838, 50970514)
+rescale <- c(.3, .4, .3)
+lolliplot(methy, features, ranges=gr, type="pin",
+          rescale = rescale, xaxis = xaxis)
+## by set data.frame to rescale
 rescale <- data.frame(
   from.start = c(50968014, 50968515, 50968838), 
   from.end   = c(50968514, 50968837, 50970514),
   to.start   = c(50968014, 50968838, 50969501), 
   to.end     = c(50968837, 50969500, 50970514)
 )
-xaxis <- c(50968014, 50968514, 50968710, 50968838, 50970514)
 lolliplot(methy, features, ranges=gr, type="pin",
           rescale = rescale, xaxis = xaxis)
 ```
@@ -975,3 +988,4 @@ We created a web application of **trackViewer** (available in 1.19.14 or later) 
 ```{r sessionInfo, results='asis'}
 sessionInfo()
 ```
+
